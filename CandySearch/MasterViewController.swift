@@ -22,7 +22,7 @@
 
 import UIKit
 
-class MasterViewController: UITableViewController, UISearchResultsUpdating {
+class MasterViewController: UITableViewController {
   
   // MARK: - Properties
 
@@ -65,6 +65,7 @@ class MasterViewController: UITableViewController, UISearchResultsUpdating {
         filteredCandies = candies.filter { candy in
             return candy.name.lowercaseString.containsString(searchText.lowercaseString)
         }
+        tableView.reloadData()
     }
     
   
@@ -83,13 +84,21 @@ class MasterViewController: UITableViewController, UISearchResultsUpdating {
   }
   
   override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    if searchController.active && searchController.searchBar.text != "" {
+        return filteredCandies.count
+    }
     return candies.count
   }
   
   override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
     let cell = tableView.dequeueReusableCellWithIdentifier("Cell", forIndexPath: indexPath)
     
-    let candy = candies[indexPath.row]
+    let candy: Candy
+    if searchController.active && searchController.searchBar.text != "" {
+        candy = filteredCandies[indexPath.row]
+    } else {
+        candy = candies[indexPath.row]
+    }
     cell.textLabel!.text = candy.name
     cell.detailTextLabel!.text = candy.category
     return cell
@@ -99,7 +108,12 @@ class MasterViewController: UITableViewController, UISearchResultsUpdating {
   override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
     if segue.identifier == "showDetail" {
       if let indexPath = tableView.indexPathForSelectedRow {
-        let candy = candies[indexPath.row]
+        let candy: Candy
+        if searchController.active && searchController.searchBar.text != "" {
+            candy = filteredCandies[indexPath.row]
+        } else {
+            candy = candies[indexPath.row]
+        }
         let detailController = (segue.destinationViewController as! UINavigationController).topViewController as! DetailViewController
         detailController.detailCandy = candy
         detailController.navigationItem.leftBarButtonItem = splitViewController?.displayModeButtonItem()
@@ -108,5 +122,11 @@ class MasterViewController: UITableViewController, UISearchResultsUpdating {
     }
   }
   
+}
+
+extension MasterViewController: UISearchResultsUpdating {
+    func updateSearchResultsForSearchController(searchController: UISearchController) {
+        filterContentForSearchText(searchController.searchBar.text!)
+    }
 }
 
