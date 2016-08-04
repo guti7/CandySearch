@@ -22,26 +22,56 @@
 
 import UIKit
 
-class MasterViewController: UITableViewController {
+class MasterViewController: UITableViewController, UISearchResultsUpdating {
   
   // MARK: - Properties
-  var detailViewController: DetailViewController? = nil
-  var candies = [Candy]()
+
+    var detailViewController: DetailViewController? = nil
+    var candies = [Candy]()
+    let searchController = UISearchController(searchResultsController: nil)
+    // array matching search string for Candy.name
+    var filteredCandies = [Candy]()
   
   // MARK: - View Setup
   override func viewDidLoad() {
     super.viewDidLoad()
-
+    
+    // Set up UI for sarchControoler
+    searchController.searchResultsUpdater = self
+    searchController.dimsBackgroundDuringPresentation = false // TODO: true?
+    definesPresentationContext = true // TODO: false?
+    tableView.tableHeaderView = searchController.searchBar
+    
+    
+    candies = [Candy(category: "Chocolate", name: "Chocolate Bar"),
+               Candy(category: "Chocolate", name: "Chocolate Chip"),
+               Candy(category: "Chocolate", name: "Dark Chocolate"),
+               Candy(category: "Hard", name: "Lollipop"),
+               Candy(category: "Hard", name: "Candy Cane"),
+               Candy(category: "Hard", name: "Jaw Breaker"),
+               Candy(category: "Other", name: "Caramel"),
+               Candy(category: "Other", name: "Sour Chew"),
+               Candy(category: "Other", name: "Gummi Bear")
+               ]
+    
     if let splitViewController = splitViewController {
       let controllers = splitViewController.viewControllers
       detailViewController = (controllers[controllers.count - 1] as! UINavigationController).topViewController as? DetailViewController
     }
   }
+    
+    func filterContentForSearchText(searchText: String, scope: String = "All") {
+        
+        filteredCandies = candies.filter { candy in
+            return candy.name.lowercaseString.containsString(searchText.lowercaseString)
+        }
+    }
+    
   
-  override func viewWillAppear(animated: Bool) {
-    clearsSelectionOnViewWillAppear = splitViewController!.collapsed
-    super.viewWillAppear(animated)
-  }
+    override func viewWillAppear(animated: Bool) {
+        clearsSelectionOnViewWillAppear = splitViewController!.collapsed
+        super.viewWillAppear(animated)
+    }
   
   override func didReceiveMemoryWarning() {
     super.didReceiveMemoryWarning()
@@ -70,10 +100,10 @@ class MasterViewController: UITableViewController {
     if segue.identifier == "showDetail" {
       if let indexPath = tableView.indexPathForSelectedRow {
         let candy = candies[indexPath.row]
-        let controller = (segue.destinationViewController as! UINavigationController).topViewController as! DetailViewController
-        controller.detailCandy = candy
-        controller.navigationItem.leftBarButtonItem = splitViewController?.displayModeButtonItem()
-        controller.navigationItem.leftItemsSupplementBackButton = true
+        let detailController = (segue.destinationViewController as! UINavigationController).topViewController as! DetailViewController
+        detailController.detailCandy = candy
+        detailController.navigationItem.leftBarButtonItem = splitViewController?.displayModeButtonItem()
+        detailController.navigationItem.leftItemsSupplementBackButton = true
       }
     }
   }
